@@ -23,7 +23,10 @@ print "item values  : " , itemValue
 
 ## dynamic programing to compute best possible value of knapsack with weight = totalWeight
 
-M = [0 for i in range(totalWeight +1)]
+MaxValuePerWeight = [0 for i in range(totalWeight +1)]
+BagContent = [ [] for i in range(totalWeight +1)]
+
+maxIdx = 0
 
 for i in range(1,totalWeight +1):
 
@@ -32,8 +35,17 @@ for i in range(1,totalWeight +1):
         if itemWeight[j] > i:
             continue ## object too big for this value
 
-        val = itemValue[j] + M[ i - itemWeight[j] ]
-        if val > M[i]:
-            M[i] = val
+        if j in BagContent[i - itemWeight[j] ]:
+            continue ## item has already been used 
 
-print "estimated weight of best knapsack with weight <= ",totalWeight," : " , max(M)
+        val = itemValue[j] + MaxValuePerWeight[ i - itemWeight[j] ]
+        if val > MaxValuePerWeight[i]:
+            MaxValuePerWeight[i] = val
+            BagContent[i] = [j] + BagContent[i - itemWeight[j] ]
+
+    if MaxValuePerWeight[maxIdx] < MaxValuePerWeight[i]:
+        maxIdx = i
+
+
+
+print "estimated weight of best knapsack with weight <= ",totalWeight," : " , MaxValuePerWeight[maxIdx] , BagContent[maxIdx]
