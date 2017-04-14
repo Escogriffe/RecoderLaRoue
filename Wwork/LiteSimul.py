@@ -23,7 +23,6 @@ def simSeq(seq, Model, t):
 				break
 			else:
 				r -= p
-
 	return newSeq
 
 	

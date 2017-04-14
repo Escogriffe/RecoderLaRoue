@@ -49,9 +49,9 @@ def getLsRoot( R, mat ):
 states = ["A","T","G","C"]
 M = SubMatrixLite(states)
 
-realT = ete3.Tree("(A:0.25,(B:0.15,(C:0.1,D:0.1):0.05):0.1);")
+realT = ete3.Tree("(A:0.10,(B:0.15,(C:0.1,D:0.1):0.05):0.05);")
 
-RootSeq= "A"*10
+RootSeq= "A"*1000
 SimulatedSeq = simSeqOverTree(RootSeq , realT, M)
 
 Sp = []
@@ -78,10 +78,13 @@ print T.write()
 setupLslowWholeTree(T,M,A)
 currentLkh = getLsRoot( T, M )
 
-for N in T.traverse("preorder"):
+
+
+
+def setupLsUp( N , M , A ):
 	resList = []
 	if N.is_root():
-		continue
+		return
 	if N.up.is_root():
 		for i in range(A.getNbPos()):
 			resList.append( {} )
@@ -117,6 +120,13 @@ for N in T.traverse("preorder"):
 				
 
 	N.add_features(Lsup=resList)
+	return
+
+
+def setupLsUpWholeTree(T,M,A):
+	for N in T.traverse("preorder"):
+		setupLsUp( N , M , A )
+
 
 def getLsFrowAnyNode( N, mat ):
 
@@ -135,28 +145,32 @@ def getLsFrowAnyNode( N, mat ):
 	return Ls
 
 
+
+setupLsUpWholeTree(T,M,A)
+
 print "Lkh",currentLkh
 
-for N in T.traverse("postorder"):
-	print N.get_leaf_names(),"\t->\t",getLsFrowAnyNode( N, M )
+#for N in T.traverse("postorder"):
+#	print N.get_leaf_names(),"\t->\t",getLsFrowAnyNode( N, M )
 
 
+###L = T.get_leaves()[0]
+###print L.name
+###L.dist = 0.25
+###
+###
+###print "new LS?", getLsFrowAnyNode( L, M )
+###
+###for n in L.iter_ancestors():
+###	setupLslowInternal( n ,M,A)
+###
+###setupLsUpWholeTree(T,M,A)
+###
+###print "new LS ", getLsRoot( T, M )
+###for N in T.traverse("postorder"):
+###	print N.get_leaf_names(),"\t->\t",getLsFrowAnyNode( N, M )
+###### shows that we need to recompute some Lslow and some Lsup as well...
 
-
-L = T.get_leaves()[0]
-print L.name
-L.dist = 0.25
-
-print "new LS?", getLsFrowAnyNode( L, M )
-
-setupLslowWholeTree(T,M,A)
-print "new LS ", getLsRoot( T, M )
-for N in T.traverse("postorder"):
-	print N.get_leaf_names(),"\t->\t",getLsFrowAnyNode( N, M )
-### shows that we ned to recompute some Lslow and some Lsup as well...
-
-
-exit(1)
 
 Bspace = [0.0,0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.99,0.999,1.0]
 
@@ -166,67 +180,29 @@ for N in T.traverse("postorder"):
 		maxLkh = currentLkh
 		maxLkhD = N.dist
 
+		print N.get_leaf_names()
+
 		for d in Bspace:
 			N.dist = d
-			## update lkh
-			if N.is_leaf():
-				setupLslowLeaves( N, M, A )
-			else:
-				setupLslowInternal( N, M, A )
 
-			for a in N.iter_ancestors():
-				if a.is_leaf():
-
-					setupLslowLeaves( a, M, A )
-				else:
-					setupLslowInternal( a, M, A )
-			newlkh = getLsRoot( T, M )
-			#print d, newlkh, "-",
+			newlkh = getLsFrowAnyNode( N, M )
+			print " ",d, newlkh
 			if newlkh > maxLkh:
 				maxLkh = newlkh
 				maxLkhD = d
 
+
 		N.dist = maxLkhD
-		currentLkh = maxLkh
-		#print "optimized 1 branch: " , maxLkhD, "->",maxLkh
-
-#print T.write()
-
-for N in T.traverse("postorder"):
-	if not N.is_root():
+		## update lkh
+		for n in N.iter_ancestors():
+			setupLslowInternal( n ,M,A)
 		
-		maxLkh = currentLkh
-		maxLkhD = N.dist
+		setupLsUpWholeTree(T,M,A)
 
-		for d in Bspace:
-			N.dist = d
-			## update lkh
-			if N.is_leaf():
-				setupLslowLeaves( N, M, A )
-			else:
-				setupLslowInternal( N, M, A )
-
-			for a in N.iter_ancestors():
-				if a.is_leaf():
-					setupLslowLeaves( a, M, A )
-				else:
-					setupLslowInternal( a, M, A )
-			newlkh = getLsRoot( T, M )
-			#print d, newlkh, "-",
-			if newlkh > maxLkh:
-				maxLkh = newlkh
-				maxLkhD = d
-
-		N.dist = maxLkhD
 		currentLkh = maxLkh
 		#print "optimized 1 branch: " , maxLkhD, "->",maxLkh
 
 print T.write()
-print "two turn of branch opt:" , currentLkh
 
 
-#for i in range(10):
-#	print M.getPsubstitution("A","A",0.1 * i) , M.getPsubstitution("A","T",0.1 * i)
-for i in range(10):
-	for N in T.traverse("postorder"):
-		print N.get_leaf_names() , "->" , N.Lslow[i]
+## compare with the result of : phyml -i test/test.aln.phi -q -m JC69 -c 1 -u test/startTree.txt -o l
