@@ -2,9 +2,9 @@
 
 from random import randint
 
-totalWeight = 10
+totalWeight = 100
 
-numberOfItems = 3
+numberOfItems = 5000
 
 minWeight=1
 maxWeight= totalWeight
@@ -17,8 +17,8 @@ maxValue = 10
 itemWeight = [randint(minWeight , maxWeight) for i in range(numberOfItems)]
 itemValue = [randint(minValue , maxValue) for i in range(numberOfItems)]
 
-print "item weights : " , itemWeight
-print "item values  : " , itemValue
+#print "item weights : " , itemWeight
+#print "item values  : " , itemValue
 
 
 ## dynamic programing to compute best possible value of knapsack with weight = totalWeight
@@ -48,4 +48,4 @@ for i in range(1,totalWeight +1):
 
 
 
-print "estimated weight of best knapsack with weight <= ",totalWeight," : " , MaxValuePerWeight[maxIdx] , BagContent[maxIdx]
+print "estimated weight of best knapsack with weight <= ",totalWeight," : " , MaxValuePerWeight[maxIdx] #, BagContent[maxIdx]
